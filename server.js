@@ -9,6 +9,7 @@ var glob = require("glob");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 var port = process.env.PORT || 3000; // set our port
 
@@ -24,6 +25,7 @@ app.get("/:username", async (req, res) => {
   })
     .on("end", async () => {
       await createWatermark(req.params.username, videoURL).then((value) => {
+        console.log(value);
         readStream = fs.createReadStream(
           req.params.username.split(" ").join("_") + "_converted.mp4"
         );
@@ -64,7 +66,7 @@ async function createWatermark(username, videoURL) {
       });
     });
   } catch (e) {
-    console.log(e);
+    return false;
   }
 
   var logoSettings = {
