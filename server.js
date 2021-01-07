@@ -66,7 +66,9 @@ async function createWatermark(username, videoURL) {
       });
     });
   } catch (e) {
-    return false;
+    console.log(
+      "Error was generated while fetching, buffering and writing the file"
+    );
   }
 
   var logoSettings = {
@@ -84,41 +86,44 @@ async function createWatermark(username, videoURL) {
         watermarked_video,
         logoSettings
       );
-      console.log("reached promise");
     });
   } catch (e) {
-    console.log(e);
+    console.log("Error was generated while adding noody logo to video");
   }
 
   // deletes any existing video so we can replace it
   //fs.unlinkSync(watermarked_video);\\
 
   // fs.writeFileSync("out.png", text2png("ShahzadUmarBaig", { color: "yellow" }));
-
-  return new Promise((resolve, reject) => {
-    fluent_ffmpeg(__dirname + "\\" + watermarked_video)
-      .videoFilters({
-        filter: "drawtext",
-        options: {
-          // outputs: 1,
-          fontfile: `${__dirname}/SegoePro-Regular.ttf`,
-          text: `@${username.split(" ").join("_")}`,
-          fontsize: 15,
-          fontcolor: "yellow",
-          x: "20",
-          y: "h-th-15",
-        },
-        inputs: "3",
-      })
-      .output(username.split(" ").join("_") + "_converted.mp4")
-      .on("end", function () {
-        resolve();
-      })
-      .on("error", function (err) {
-        reject();
-      })
-      .run();
-  });
+  try {
+    return new Promise((resolve, reject) => {
+      console.log("reached promise");
+      fluent_ffmpeg(__dirname + "\\" + watermarked_video)
+        .videoFilters({
+          filter: "drawtext",
+          options: {
+            // outputs: 1,
+            fontfile: `${__dirname}/SegoePro-Regular.ttf`,
+            text: `@${username.split(" ").join("_")}`,
+            fontsize: 15,
+            fontcolor: "yellow",
+            x: "20",
+            y: "h-th-15",
+          },
+          inputs: "3",
+        })
+        .output(username.split(" ").join("_") + "_converted.mp4")
+        .on("end", function () {
+          resolve();
+        })
+        .on("error", function (err) {
+          reject();
+        })
+        .run();
+    });
+  } catch (e) {
+    console.log("Error was generated while adding text to video");
+  }
 }
 
 function deleteFiles(username) {
