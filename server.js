@@ -126,7 +126,7 @@ async function addUsername(username) {
     username.split(" ").join("_") + "_watermarked_video.mp4";
   var convertedVideo = username.split(" ").join("_") + "_converted.mp4";
   var watermarkVideoPath = path.join(__dirname, `/${watermarked_video}`);
-
+  var fontPath = path.join(__dirname, "/SegoePro-Regular.ttf");
   var convertedVideoPath = path.join(__dirname, `/${convertedVideo}`);
   return new Promise((resolve, reject) => {
     console.log("reached promise");
@@ -135,7 +135,7 @@ async function addUsername(username) {
         filter: "drawtext",
         options: {
           // outputs: 1,
-          fontfile: `${__dirname}/SegoePro-Regular.ttf`,
+          fontfile: `${fontPath}`,
           text: `@${username.split(" ").join("_")}`,
           fontsize: 15,
           fontcolor: "yellow",
@@ -156,13 +156,16 @@ async function addUsername(username) {
 }
 
 function deleteFiles(username) {
-  fs.unlinkSync(
-    __dirname + "\\" + username.split(" ").join("_") + "_raw_video.mp4"
-  );
-  fs.unlinkSync(
-    __dirname + "\\" + username.split(" ").join("_") + "_watermarked_video.mp4"
-  );
-  fs.unlinkSync(
-    __dirname + "\\" + username.split(" ").join("_") + "_converted.mp4"
-  );
+  var watermarked_video =
+    username.split(" ").join("_") + "_watermarked_video.mp4";
+  var convertedVideo = username.split(" ").join("_") + "_converted.mp4";
+  var internet_downloaded_video =
+    username.split(" ").join("_") + "_raw_video.mp4";
+  var watermarkVideoPath = path.join(__dirname, `/${watermarked_video}`);
+  var convertedVideoPath = path.join(__dirname, `/${convertedVideo}`);
+  var rawFilePath = path.join(__dirname, `/${internet_downloaded_video}`);
+
+  fs.unlinkSync(rawFilePath);
+  fs.unlinkSync(watermarkVideoPath);
+  fs.unlinkSync(convertedVideoPath);
 }
