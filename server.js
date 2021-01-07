@@ -7,6 +7,7 @@ const express = require("express");
 var app = express();
 var bodyParser = require("body-parser");
 var glob = require("glob");
+const path = require("path");
 
 const wfile = promisify(writeFile);
 
@@ -59,19 +60,6 @@ app.get("/:username", async (req, res) => {
         deleteFiles(req.params.username);
         readStream.close();
       });
-
-      // await createWatermark(req.params.username, videoURL).then((value) => {
-      //   console.log(value);
-      //   readStream = fs.createReadStream(
-      //     req.params.username.split(" ").join("_") + "_converted.mp4"
-      //   );
-      //   console.log("Opened ReadStream");
-      //   return readStream.pipe(res).on("finish", () => {
-      //     console.log("Sent the Response");
-      //     deleteFiles(req.params.username);
-      //     readStream.close();
-      //   });
-      // });
     })
     .on("error", (err) => {
       console.log(err);
@@ -99,40 +87,50 @@ async function fetchVideo(username, videoURL) {
 async function addWatermark(username) {
   var internet_downloaded_video =
     username.split(" ").join("_") + "_raw_video.mp4";
-  var watermarkPath = "new_logo.PNG";
   var watermarked_video =
     username.split(" ").join("_") + "_watermarked_video.mp4";
 
-  if (fs.existsSync(__dirname + "\\" + internet_downloaded_video)) {
+  var rawFilePath = path.join(__dirname, `/${internet_downloaded_video}`);
+  var watermarkPath = path.join(__dirname, `/new_logo.PNG`);
+  var watermarkVideoPath = path.join(__dirname, `/${watermarked_video}`);
+
+  if (fs.existsSync(rawFilePath)) {
     console.log(true);
+
+    return new Promise((resolve, reject) => {
+      fluent_ffmpeg()
+        .input(rawFilePath)
+        .addInput(watermarkPath)
+        .videoCodec("libx264")
+        .outputOptions("-pix_fmt yuv420p")
+        .complexFilter(["overlay=0:H-h-10"])
+        .output(watermarkVideoPath)
+        .on("end", function () {
+          resolve();
+        })
+        .on("error", function (err) {
+          reject();
+        })
+        .run();
+    });
   } else {
     console.log(false);
+    return new Promise((resolve, reject) => {
+      reject();
+    });
   }
-
-  return new Promise((resolve, reject) => {
-    fluent_ffmpeg()
-      .input(__dirname + "\\" + internet_downloaded_video)
-      .addInput(__dirname + "\\" + watermarkPath)
-      .videoCodec("libx264")
-      .outputOptions("-pix_fmt yuv420p")
-      .complexFilter(["overlay=0:H-h-10"])
-      .output(__dirname + "\\" + watermarked_video)
-      .on("end", function () {
-        resolve();
-      })
-      .on("error", function (err) {
-        reject();
-      })
-      .run();
-  });
 }
 
 async function addUsername(username) {
   var watermarked_video =
     username.split(" ").join("_") + "_watermarked_video.mp4";
+  var convertedVideo = username.split(" ").join("_") + "_converted.mp4";
+  var watermarkVideoPath = path.join(__dirname, `/${watermarked_video}`);
+
+  var convertedVideoPath = path.join(__dirname, `/${convertedVideo}`);
   return new Promise((resolve, reject) => {
     console.log("reached promise");
-    fluent_ffmpeg(__dirname + "\\" + watermarked_video)
+    fluent_ffmpeg(watermarkVideoPath)
       .videoFilters({
         filter: "drawtext",
         options: {
@@ -146,7 +144,7 @@ async function addUsername(username) {
         },
         inputs: "3",
       })
-      .output(username.split(" ").join("_") + "_converted.mp4")
+      .output(convertedVideoPath)
       .on("end", function () {
         resolve();
       })
@@ -156,47 +154,6 @@ async function addUsername(username) {
       .run();
   });
 }
-
-// async function createWatermark(username, videoURL) {
-//   console.log("createdWaterMark Started");
-//   var watermarkPath = "new_logo.png";
-//   var internet_downloaded_video =
-//     username.split(" ").join("_") + "_raw_video.mp4";
-//   var internet_video_link = videoURL;
-//   var watermarked_video =
-//     username.split(" ").join("_") + "_watermarked_video.mp4";
-//   console.log(username.split(" ").join("_"));
-//   console.log(internet_video_link);
-
-//   var logoSettings = {
-//     position: "SE", // Position: NE NC NW SE SC SW C CE CW
-//     margin_nord: null, // Margin nord
-//     margin_sud: null, // Margin sud
-//     margin_east: null, // Margin east
-//     margin_west: null, // Margin west
-//   };
-//   try {
-//     await new ffmpeg(internet_downloaded_video).then(async (value) => {
-//       console.log("adding watermark");
-//       await value.fnAddWatermark(
-//         watermarkPath,
-//         watermarked_video,
-//         logoSettings
-//       );
-//     });
-//   } catch (e) {
-//     console.log("Error was generated while adding noody logo to video");
-//   }
-
-//   // deletes any existing video so we can replace it
-//   //fs.unlinkSync(watermarked_video);\\
-
-//   // fs.writeFileSync("out.png", text2png("ShahzadUmarBaig", { color: "yellow" }));
-//   try {
-//   } catch (e) {
-//     console.log("Error was generated while adding text to video");
-//   }
-//}
 
 function deleteFiles(username) {
   fs.unlinkSync(
