@@ -1,7 +1,6 @@
 const fs = require("fs");
 const { writeFile } = require("fs");
 const { promisify } = require("util");
-var ffmpeg = require("ffmpeg");
 var fluent_ffmpeg = require("fluent-ffmpeg");
 const fetch = require("node-fetch");
 const express = require("express");
@@ -91,7 +90,7 @@ async function fetchVideo(username, videoURL) {
     console.log("fetched video");
     var buffered_video = await fetched_video.buffer();
     console.log("buffered video");
-    return await wfile(internet_downloaded_video, buffered_video);
+    await wfile(internet_downloaded_video, buffered_video);
   } catch (e) {
     console.log(e);
   }
@@ -100,17 +99,23 @@ async function fetchVideo(username, videoURL) {
 async function addWatermark(username) {
   var internet_downloaded_video =
     username.split(" ").join("_") + "_raw_video.mp4";
-  var watermarkPath = "new_logo.png";
+  var watermarkPath = "new_logo.PNG";
   var watermarked_video =
     username.split(" ").join("_") + "_watermarked_video.mp4";
 
+  if (fs.existsSync(__dirname + "\\" + internet_downloaded_video)) {
+    console.log(true);
+  } else {
+    console.log(false);
+  }
+
   return new Promise((resolve, reject) => {
-    ffmpeg()
+    fluent_ffmpeg()
       .input(__dirname + "\\" + internet_downloaded_video)
-      .input(__dirname + "\\" + watermarkPath)
+      .addInput(__dirname + "\\" + watermarkPath)
       .videoCodec("libx264")
       .outputOptions("-pix_fmt yuv420p")
-      .complexFilter(["[0:v]scale=640:-1[bg];[bg][1:v]overlay=W-w-10:H-h-10"])
+      .complexFilter(["overlay=0:H-h-10"])
       .output(__dirname + "\\" + watermarked_video)
       .on("end", function () {
         resolve();
