@@ -1,4 +1,5 @@
 const fs = require("fs");
+const fsWriteFile = require("fs").promises;
 var ffmpeg = require("ffmpeg");
 var fluent_ffmpeg = require("fluent-ffmpeg");
 const fetch = require("node-fetch");
@@ -24,20 +25,36 @@ app.get("/:username", async (req, res) => {
     }
   })
     .on("end", async () => {
-      await fetchVideo(req.params.username, videoURL).then(async (value) => {
-        await addWatermark(req.params.username).then(async (value) => {
-          await addUsername(req.params.username).then((value) => {
-            readStream = fs.createReadStream(
-              req.params.username.split(" ").join("_") + "_converted.mp4"
-            );
-            console.log("Opened ReadStream");
-            return readStream.pipe(res).on("finish", () => {
-              console.log("Sent the Response");
-              deleteFiles(req.params.username);
-              readStream.close();
-            });
-          });
-        });
+      try {
+        await fetchVideo(req.params.username, videoURL);
+      } catch (e) {
+        console.log(e);
+        console.log("Exception in fetching video");
+      }
+
+      try {
+        await addWatermark(req.params.username);
+      } catch (e) {
+        console.log(e);
+
+        console.log("Exception in adding watermark to video");
+      }
+      try {
+        await addUsername(req.params.username);
+      } catch (e) {
+        console.log(e);
+
+        console.log("Exception in adding username to video");
+      }
+
+      readStream = fs.createReadStream(
+        req.params.username.split(" ").join("_") + "_converted.mp4"
+      );
+      console.log("Opened ReadStream");
+      return readStream.pipe(res).on("finish", () => {
+        console.log("Sent the Response");
+        deleteFiles(req.params.username);
+        readStream.close();
       });
 
       // await createWatermark(req.params.username, videoURL).then((value) => {
@@ -65,20 +82,21 @@ async function fetchVideo(username, videoURL) {
   var internet_downloaded_video =
     username.split(" ").join("_") + "_raw_video.mp4";
   var internet_video_link = videoURL;
-
-  await fetch(internet_video_link).then(async (value) => {
-    console.log("Fetched Video");
-    await value.buffer().then((value) => {
-      console.log("Buffered Video");
-      return new Promise((resolve, reject) => {
-        try {
-          fs.writeFile(internet_downloaded_video, value, () => resolve());
-        } catch (e) {
-          reject();
-        }
-      });
-    });
-  });
+  try {
+    var fetched_video = await fetch(internet_video_link);
+    console.log("fetched video");
+    var buffered_video = await fetched_video.buffer();
+    console.log("buffered video");
+    return await fsWriteFile.writeFile(
+      internet_downloaded_video,
+      buffered_video,
+      () => {
+        console.log("Wrote file");
+      }
+    );
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 async function addWatermark(username) {
