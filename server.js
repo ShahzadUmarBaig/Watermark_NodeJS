@@ -21,48 +21,50 @@ app.get("/:username", async (req, res) => {
   var videoURL = req.query.videoURL;
   console.log("GET call received");
   var readStream;
-  var readStreamPath = path.join(
-    __dirname,
-    `/${req.params.username.split(" ").join("_")}_converted.mp4`
-  );
+  glob(`**/${req.params.username.split(" ").join("_")}_*.mp4`, (er, files) => {
+    console.log(files);
+    for (const file of files) {
+      fs.unlinkSync(__dirname + "\\" + file);
+    }
+  })
+    .on("end", async () => {
+      try {
+        await fetchVideo(req.params.username, videoURL);
+        console.log("Wrote to file");
+      } catch (err) {
+        console.log(err);
+        console.log("Exception in fetching video");
+      }
+      try {
+        await addWatermark(req.params.username);
+      } catch (err) {
+        console.log(err);
+        console.log("Exception in adding watermark to video");
+      }
+      try {
+        await addUsername(req.params.username);
+      } catch (err) {
+        console.log(err);
+        console.log("Exception in adding username to video");
+      }
 
-  if (fs.existsSync(readStreamPath)) {
-    readStream = fs.createReadStream(readStreamPath);
+      var readStreamPath = path.join(
+        __dirname,
+        `/${req.params.username.split(" ").join("_")}_converted.mp4`
+      );
 
-    console.log("Opened ReadStream");
-    return readStream.pipe(res, { end: true }).on("finish", () => {
-      console.log("Sent the Response");
-      readStream.close();
+      readStream = fs.createReadStream(readStreamPath);
+
+      console.log("Opened ReadStream");
+      return readStream.pipe(res, { end: true }).on("finish", () => {
+        console.log("Sent the Response");
+        deleteFiles(req.params.username);
+        readStream.close();
+      });
+    })
+    .on("error", (err) => {
+      console.log(err);
     });
-  } else {
-    try {
-      await fetchVideo(req.params.username, videoURL);
-      console.log("Wrote to file");
-    } catch (err) {
-      console.log(err);
-      console.log("Exception in fetching video");
-    }
-    try {
-      await addWatermark(req.params.username);
-    } catch (err) {
-      console.log(err);
-      console.log("Exception in adding watermark to video");
-    }
-    try {
-      await addUsername(req.params.username);
-    } catch (err) {
-      console.log(err);
-      console.log("Exception in adding username to video");
-    }
-
-    readStream = fs.createReadStream(readStreamPath);
-
-    console.log("Opened ReadStream");
-    return readStream.pipe(res, { end: true }).on("finish", () => {
-      console.log("Sent the Response");
-      readStream.close();
-    });
-  }
 });
 
 app.listen(port);
