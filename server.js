@@ -89,7 +89,7 @@ async function addWatermark(username) {
     username.split(" ").join("_") + "_watermarked_video.mp4";
 
   var rawFilePath = path.join(__dirname, `/${internet_downloaded_video}`);
-  var watermarkPath = path.join(__dirname, `/new_logo.png`);
+  var watermarkPath = path.join(__dirname, `/logo.png`);
   var watermarkVideoPath = path.join(__dirname, `/${watermarked_video}`);
 
   if (fs.existsSync(rawFilePath)) {
