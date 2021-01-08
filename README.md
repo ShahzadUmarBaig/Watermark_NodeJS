@@ -4,7 +4,13 @@ A NodeJS script to put logo on the videos and text on it like tiktok.
 
 Clone the repository, Run Command 'npm install'
 
-now in the repository folder add an image of logo name 'logo.png' and run the script using 'node server'
+now in the repository folder add an image of logo name 'logo.png'
+
+and before you run the script you need to install ffmpeg to your Program Files folder and add 'path/ffmpeg/bin' to your path environment variable
+
+you can install ffmpeg from https://www.gyan.dev/ffmpeg/builds/ download the latest release full build 
+
+and run the script using 'node server'
 
 Open the browser and Open this link for testing 
 
