@@ -31,31 +31,32 @@ app.get("/:username", async (req, res) => {
       try {
         await fetchVideo(req.params.username, videoURL);
         console.log("Wrote to file");
-      } catch (e) {
-        console.log(e);
+      } catch (err) {
+        console.log(err);
         console.log("Exception in fetching video");
       }
-
       try {
         await addWatermark(req.params.username);
-      } catch (e) {
-        console.log(e);
-
+      } catch (err) {
+        console.log(err);
         console.log("Exception in adding watermark to video");
       }
       try {
         await addUsername(req.params.username);
-      } catch (e) {
-        console.log(e);
-
+      } catch (err) {
+        console.log(err);
         console.log("Exception in adding username to video");
       }
 
-      readStream = fs.createReadStream(
-        req.params.username.split(" ").join("_") + "_converted.mp4"
+      var readStreamPath = path.join(
+        __dirname,
+        `/${req.params.username.split(" ").join("_")}_converted.mp4`
       );
+
+      readStream = fs.createReadStream(readStreamPath);
+
       console.log("Opened ReadStream");
-      return readStream.pipe(res).on("finish", () => {
+      return readStream.pipe(res, { end: true }).on("finish", () => {
         console.log("Sent the Response");
         deleteFiles(req.params.username);
         readStream.close();
@@ -91,7 +92,7 @@ async function addWatermark(username) {
     username.split(" ").join("_") + "_watermarked_video.mp4";
 
   var rawFilePath = path.join(__dirname, `/${internet_downloaded_video}`);
-  var watermarkPath = path.join(__dirname, `/new_logo.PNG`);
+  var watermarkPath = path.join(__dirname, `/new_logo.png`);
   var watermarkVideoPath = path.join(__dirname, `/${watermarked_video}`);
 
   if (fs.existsSync(rawFilePath)) {
