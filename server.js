@@ -6,7 +6,6 @@ const fetch = require("node-fetch");
 const express = require("express");
 var app = express();
 var bodyParser = require("body-parser");
-var glob = require("glob");
 const path = require("path");
 
 const wfile = promisify(writeFile);
