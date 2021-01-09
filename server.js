@@ -26,6 +26,8 @@ app.get("/:username", async (req, res) => {
     `/${req.params.username.split(" ").join("_")}_converted.mp4`
   );
   if (fs.existsSync(readStreamPath)) {
+    readStream = fs.createReadStream(readStreamPath);
+
     return readStream.pipe(res, { end: true }).on("finish", () => {
       console.log("Sent the Response");
       //deleteFiles(req.params.username);
