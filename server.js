@@ -136,10 +136,10 @@ async function addUsername(username) {
           // outputs: 1,
           fontfile: `${fontPath}`,
           text: `@${username.split(" ").join("_")}`,
-          fontsize: 15,
+          fontsize: 20,
           fontcolor: "yellow",
-          x: "20",
-          y: "h-th-15",
+          x: "30",
+          y: "h-th-30",
         },
         inputs: "3",
       })
